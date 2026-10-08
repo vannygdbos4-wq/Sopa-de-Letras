@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Sopa de vicios de redacción</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+  /* Layout: encabezado compacto, tablero a la izquierda y lista de palabras a la derecha; una sola columna en celular. */
+  :root {
+    --bg: #f3f6f4;
+    --surface: #ffffff;
+    --fg: #14241c;
+    --muted: #55655c;
+    --line: #cfd9d3;
+    --green: #00703c;
+    --green-ink: #ffffff;
+    --gold: #e09f1f;
+    --gold-soft: #fbe9c2;
+    --found-1: #cfe9da;
+    --found-2: #fbe3a8;
+    --found-3: #cfe0f2;
+    --found-4: #f3d2d6;
+    --pick: #8fd0ac;
+    --reveal: #ffd9d2;
+    --wrong: #b3261e;
+    --font-display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+    --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1713;
+      --surface: #16231d;
+      --fg: #e7f0ea;
+      --muted: #9db0a5;
+      --line: #2c3f35;
+      --green: #4fc489;
+      --green-ink: #07130d;
+      --gold: #f0b440;
+      --gold-soft: #3b2f10;
+      --found-1: #1f4a35;
+      --found-2: #5a4410;
+      --found-3: #1f3b57;
+      --found-4: #5a2630;
+      --pick: #2f7a54;
+      --reveal: #6a3328;
+      --wrong: #ff8a80;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1713;
+    --surface: #16231d;
+    --fg: #e7f0ea;
+    --muted: #9db0a5;
+    --line: #2c3f35;
+    --green: #4fc489;
+    --green-ink: #07130d;
+    --gold: #f0b440;
+    --gold-soft: #3b2f10;
+    --found-1: #1f4a35;
+    --found-2: #5a4410;
+    --found-3: #1f3b57;
+    --found-4: #5a2630;
+    --pick: #2f7a54;
+    --reveal: #6a3328;
+    --wrong: #ff8a80;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-inline: 16px;
+    padding-block: 24px 40px;
+  }
+  .wrap { max-width: 980px; margin-inline: auto; display: flex; flex-direction: column; gap: 20px; }
+
+  header { display: flex; flex-direction: column; gap: 6px; border-bottom: 3px solid var(--gold); padding-bottom: 14px; }
+  .eyebrow { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green); font-weight: 700; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 6vw, 2.8rem); line-height: 1.05; margin: 0; text-wrap: balance; }
+  .lead { color: var(--muted); margin: 0; max-width: 62ch; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 24px; align-items: start; }
+  @media (max-width: 760px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  .board-wrap { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(var(--n), 1fr);
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 640px;
+    background: var(--surface);
+    border: 2px solid var(--green);
+    border-radius: 6px;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: crosshair;
+    overflow: hidden;
+  }
+  .cell {
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-body); font-weight: 700;
+    font-size: clamp(0.72rem, 3.4vw, 1.2rem);
+    color: var(--fg);
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    min-width: 0;
+    transition: background 0.08s;
+  }
+  .cell.pick { background: var(--pick); }
+  .cell.f1 { background: var(--found-1); }
+  .cell.f2 { background: var(--found-2); }
+  .cell.f3 { background: var(--found-3); }
+  .cell.f4 { background: var(--found-4); }
+  .cell.reveal { background: var(--reveal); }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button {
+    font: inherit; font-weight: 700;
+    border-radius: 6px; padding: 9px 16px; cursor: pointer;
+    border: 2px solid var(--green); background: var(--surface); color: var(--green);
+  }
+  button.primary { background: var(--green); color: var(--green-ink); }
+  button:hover { filter: brightness(1.06); }
+  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  .status { font-weight: 700; color: var(--fg); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+  .msg { background: var(--gold-soft); border-left: 5px solid var(--gold); padding: 10px 14px; border-radius: 4px; font-weight: 700; }
+
+  aside { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  aside h2 { font-family: var(--font-display); font-size: 1.15rem; margin: 0; }
+  ul.words { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px 12px; }
+  @media (min-width: 761px) { ul.words { grid-template-columns: 1fr 1fr; } }
+  ul.words li { font-weight: 700; font-size: 0.82rem; letter-spacing: 0.04em; overflow-wrap: anywhere; }
+  ul.words li.done { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: var(--gold); }
+  .hint { color: var(--muted); font-size: 0.88rem; margin: 0; }
+
+  .feedback { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--green); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-height: 6.5rem; }
+  .feedback.bad { border-left-color: var(--gold); }
+  .feedback .fb-label { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .feedback .fb-title { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; margin: 0; }
+  .feedback p { margin: 0; max-width: 62ch; }
+  .recap { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .recap li { font-size: 0.95rem; }
+  .recap b { font-family: var(--font-display); }
+
+  ul.words li.ok { color: var(--green); text-decoration: none; }
+  ul.words li.ok::before { content: "✓ "; }
+  ul.words li.bad { color: var(--wrong); text-decoration: none; }
+  ul.words li.bad::before { content: "✗ "; }
+  .opts { display: grid; gap: 8px; margin-top: 8px; }
+  button.opt { text-align: left; font-weight: 400; background: var(--surface); color: var(--fg); border: 2px solid var(--line); }
+  button.opt:hover { border-color: var(--green); }
+  .feedback.q { border-left-color: var(--gold); }
+  .feedback.bad .fb-title { color: var(--wrong); }
+
+  .feedback.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; max-width: 680px; margin-inline: auto; max-height: 75%; overflow-y: auto; border-left: 1px solid var(--line); border-top: 6px solid var(--gold); border-radius: 14px 14px 0 0; box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.28); padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .feedback.sheet.good { border-top-color: var(--green); }
+  .feedback.sheet.bad { border-top-color: var(--wrong); }
+  .feedback.sheet button.primary { align-self: flex-start; margin-top: 8px; }
+  button { min-height: 44px; }
+  .board { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  .board.locked { cursor: not-allowed; }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .gate { position: fixed; inset: 0; z-index: 40; background: var(--bg); display: grid; place-items: center; padding: 16px; overflow-y: auto; }
+  .gate-card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--line); border-top: 6px solid var(--green); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .gate-card h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; margin: 0; }
+  .gate-card label { font-weight: 700; }
+  input[type="text"], input[type="password"] { font: inherit; font-size: 16px; min-height: 44px; padding: 8px 12px; border-radius: 6px; border: 2px solid var(--line); background: var(--bg); color: var(--fg); width: 100%; }
+  input:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; border-color: var(--green); }
+  .gate-err { color: var(--wrong); font-weight: 700; margin: 0; }
+  .sendstate { margin: 0; font-size: 0.85rem; color: var(--muted); }
+  .player { font-weight: 700; color: var(--green); }
+  .admin { position: fixed; inset: 0; z-index: 50; background: var(--bg); overflow-y: auto; padding: 16px; padding-top: calc(16px + env(safe-area-inset-top, 0px)); padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+  .admin-inner { max-width: 980px; margin-inline: auto; display: flex; flex-direction: column; gap: 14px; }
+  .admin h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; margin: 0; }
+  .admin-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+  .admin-row .field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; min-width: 0; }
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+  table.res { border-collapse: collapse; width: 100%; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+  table.res th, table.res td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.res th { font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  table.res td.num { text-align: right; font-weight: 700; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; background: var(--found-1); }
+  .tag.pend { background: var(--gold-soft); }
+  table.res td.pos { width: 1%; }
+  .medal { display: inline-flex; align-items: center; justify-content: center; min-width: 2rem; height: 2rem; border-radius: 999px; font-weight: 800; background: var(--bg); border: 1px solid var(--line); color: var(--fg); }
+  .medal.p1 { background: var(--gold); border-color: var(--gold); color: #14241c; }
+  .medal.p2 { background: var(--line); border-color: var(--line); }
+  .medal.p3 { background: var(--found-2); border-color: var(--found-2); }
+  table.res tr.top td { font-weight: 700; }
+  .admin-msg { margin: 0; font-weight: 700; }
+  .admin-msg.err { color: var(--wrong); }
+  .topbox { background: var(--surface); border: 1px solid var(--line); border-top: 6px solid var(--gold); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .topbox h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; margin: 0; }
+  .toplist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .toplist li { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 4px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  .toplist .nm { overflow-wrap: anywhere; font-weight: 700; }
+  .toplist .sc { font-weight: 700; }
+  .toprow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .toprow .hint { flex: 1 1 200px; }
+  footer { color: var(--muted); font-size: 0.82rem; }
+  @media (prefers-reduced-motion: reduce) { .cell { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Comunicación oral y escrita · UABC</span>
+    <h1>Sopa de vicios de redacción</h1>
+    <p class="lead">Encuentra las 16 palabras del tema. Escribe tu nombre y arrastra con el dedo o el mouse sobre las letras, en cualquier dirección. Al hallar una palabra te harán una pregunta: contesta bien para sumar un punto. Solo hay un intento por pregunta, y si muestras la solución el juego termina.</p>
+  </header>
+
+  <div class="layout">
+    <div class="board-wrap">
+      <div class="board" id="board" role="application" aria-label="Tablero de la sopa de letras"></div>
+      <div class="toolbar">
+        <button class="primary" id="btn-reveal" type="button">Mostrar solución</button>
+        <span class="status" id="status" aria-live="polite">0 de 16</span>
+      </div>
+      <p class="sendstate" id="sendstate" hidden></p>
+      <div class="feedback" id="feedback" aria-live="polite">
+        <span class="fb-label">Retroalimentación</span>
+        <p>Encuentra una palabra para ver qué significa y cómo se relaciona con los vicios de redacción.</p>
+      </div>
+      <div class="msg" id="win" hidden>¡Completaste la sopa de letras! Puntaje final: <span id="score"></span> de 16 respuestas correctas. Resumen: anfibología es ambigüedad («Vi al hombre con el telescopio»); pleonasmo es repetir lo obvio («Súbete para arriba»); solecismo es error de concordancia («Habían muchas personas»); cacofonía es repetir sonidos («Pedro pidió pan para Pablo»); barbarismo es usar mal una palabra o un anglicismo («likear»).</div>
+    </div>
+
+    <aside>
+      <h2>Palabras a buscar</h2>
+      <ul class="words" id="words"></ul>
+      <p class="hint">Sin acentos: la sopa usa las letras sin tilde, por ejemplo ANFIBOLOGIA.</p>
+    </aside>
+  </div>
+
+  <section class="topbox" id="topbox" aria-labelledby="top-title" hidden>
+    <h2 id="top-title">Top 10 del grupo</h2>
+    <ol class="toplist" id="toplist"></ol>
+    <div class="toprow">
+      <p class="hint" id="top-msg">Aparecen quienes ya terminaron la sopa.</p>
+      <button id="top-refresh" type="button">Actualizar</button>
+    </div>
+  </section>
+
+  <footer>Fuente de los temas: Ordóñez García, E. (2014). Uso correcto de los elementos de la oración. Vicios del lenguaje. Universidad Autónoma del Estado de Hidalgo.</footer>
+</div>
+
+
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" hidden>
+  <div class="gate-card" id="gate-form">
+    <span class="eyebrow">Antes de empezar</span>
+    <h2 id="gate-title">Escribe tu nombre</h2>
+    <p class="hint">Tu nombre y tu resultado se guardan en el registro. Si terminas entre los mejores, tu nombre aparece en el Top 10 del grupo.</p>
+    <label for="name-input">Nombre completo</label>
+    <input id="name-input" type="text" autocomplete="name" maxlength="60">
+    <p class="gate-err" id="gate-err" hidden>Escribe al menos 3 letras.</p>
+    <button class="primary" id="gate-go" type="button">Comenzar</button>
+  </div>
+</div>
+
+<div class="admin" id="admin" hidden>
+  <div class="admin-inner">
+    <h2>Top del grupo</h2>
+    <div class="admin-row">
+      <div class="field">
+        <label for="clave-input">Clave del registro</label>
+        <input id="clave-input" type="password" autocomplete="off">
+      </div>
+      <button class="primary" id="admin-load" type="button">Ver resultados</button>
+      <button id="admin-close" type="button">Cerrar</button>
+    </div>
+    <p class="admin-msg" id="admin-msg" aria-live="polite"></p>
+    <div class="table-scroll" id="admin-table" hidden></div>
+    <button id="admin-more" type="button" hidden>Ver todos</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var DATA = {"n": 15, "grid": ["RSHZSCACOFONIAE", "MOMCONCORDANCIA", "MLSAPJFRVLPOGJD", "HEEPRSTOMBNIMLU", "ECNPSSDAVAOCRHR", "MIOLEARISRIAFUG", "CSIELNEGIBCUSNO", "AMCOGMPONACTOZR", "FOINNCELTRANMEE", "BMSAIHTOAIDUIDC", "EUOSRNIBXSEPNIE", "RMPMSDCIIMRJOUP", "RGEOLCIFSOAPNLT", "OIRMDDONLJECIFO", "RIPGJDNATDTRSJR"], "words": {"PREPOSICIONES": {"r": 14, "c": 2, "dr": -1, "dc": 0}, "CONCORDANCIA": {"r": 1, "c": 3, "dr": 0, "dc": 1}, "ANFIBOLOGIA": {"r": 14, "c": 7, "dr": -1, "dc": 0}, "BARBARISMO": {"r": 3, "c": 9, "dr": 1, "dc": 0}, "PUNTUACION": {"r": 10, "c": 11, "dr": -1, "dc": 0}, "REPETICION": {"r": 5, "c": 6, "dr": 1, "dc": 0}, "PLEONASMO": {"r": 4, "c": 3, "dr": 1, "dc": 0}, "SOLECISMO": {"r": 0, "c": 1, "dr": 1, "dc": 0}, "CACOFONIA": {"r": 0, "c": 5, "dr": 0, "dc": 1}, "REDACCION": {"r": 11, "c": 10, "dr": -1, "dc": 0}, "SINONIMOS": {"r": 14, "c": 12, "dr": -1, "dc": 0}, "SINTAXIS": {"r": 5, "c": 8, "dr": 1, "dc": 0}, "RECEPTOR": {"r": 7, "c": 14, "dr": 1, "dc": 0}, "FLUIDEZ": {"r": 13, "c": 13, "dr": -1, "dc": 0}, "INGLES": {"r": 9, "c": 4, "dr": -1, "dc": 0}, "ERROR": {"r": 10, "c": 0, "dr": 1, "dc": 0}}, "fb": {"ANFIBOLOGIA": "Vicio de sintaxis: la oración puede entenderse de más de una manera y no se aclara. Se evita con palabras claras, ideas ordenadas y buena puntuación.", "PLEONASMO": "Repetición innecesaria de palabras que ya están claras. Ejemplo: «Súbete para arriba» se corrige con «Súbete».", "SOLECISMO": "Error en la construcción de la oración por falta de concordancia. Ejemplo: «Habían muchas personas» se corrige con «Había muchas personas».", "CACOFONIA": "Repetición de sonidos, sílabas o palabras muy cercanas que hace la lectura poco fluida. Ejemplo: «Pedro pidió pan para Pablo».", "BARBARISMO": "Uso incorrecto de palabras o de términos en inglés que tienen equivalente en español. Ejemplo: «likear» se corrige con «darle Me gusta».", "SINTAXIS": "La sintaxis es el orden en que se acomodan las palabras en la oración. La anfibología es un vicio de sintaxis: aparece cuando las palabras o las preposiciones están mal ordenadas y la oración admite varios significados.", "REDACCION": "Al redactar se cometen errores que dificultan entender las ideas. Conocer los vicios permite escribir con más claridad.", "SINONIMOS": "Usar sinónimos ayuda a evitar la cacofonía y las repeticiones.", "PUNTUACION": "El uso adecuado de los signos de puntuación ayuda a evitar la anfibología.", "CONCORDANCIA": "Cuando no hay buena concordancia entre las palabras de una oración, aparece el solecismo.", "PREPOSICIONES": "Un orden incorrecto de las preposiciones es una de las causas de la anfibología.", "RECEPTOR": "Es quien lee el texto. Los vicios de redacción lo confunden porque el mensaje es repetitivo o difícil de comprender.", "ERROR": "Los vicios de redacción son errores o formas incorrectas de escribir que afectan la comprensión del mensaje.", "REPETICION": "Cuando se repiten sonidos, sílabas o palabras muy cerca dentro de una oración, aparece la cacofonía. Para evitarla se usan sinónimos, se redacta con más claridad o se cambia el orden de las palabras.", "INGLES": "Usar palabras en inglés cuando existe un equivalente en español es barbarismo. Ejemplo: «show» se corrige con «espectáculo».", "FLUIDEZ": "Sin concordancia ni fluidez entre las palabras hay solecismo, y la cacofonía vuelve el texto poco fluido."}};
+  var N = DATA.n;
+  var board = document.getElementById("board");
+  var list = document.getElementById("words");
+  var status = document.getElementById("status");
+  var win = document.getElementById("win");
+  var btnReveal = document.getElementById("btn-reveal");
+  var names = Object.keys(DATA.words).sort();
+  var QS = {"ANFIBOLOGIA": ["¿Qué ocurre en una anfibología?", "La oración puede entenderse de más de una manera y no se aclara", "Se repiten palabras que ya estaban claras", "Se usan palabras en inglés con equivalente en español"], "PLEONASMO": ["¿Cuál de estas oraciones es un pleonasmo?", "Súbete para arriba", "Habían muchas personas en el lugar", "Voy a likear a este artista"], "SOLECISMO": ["¿Cuál es la forma correcta de esta oración?", "Había muchas personas en el lugar", "Habían muchas personas en el lugar", "Habían mucha personas en el lugar"], "CACOFONIA": ["¿Cuál de estos ejemplos es una cacofonía?", "Pedro pidió pan para Pablo", "Oríllate a la orilla", "Muy buen show el que dio mi amigo"], "BARBARISMO": ["¿Qué es un barbarismo?", "Usar mal una palabra o usar un anglicismo que tiene equivalente en español", "Repetir sonidos muy cercanos en una oración", "Escribir una oración con dos significados"], "SINTAXIS": ["En la anfibología, ¿qué suele estar mal ordenado en la oración?", "Las palabras o las preposiciones", "Los sonidos de las sílabas", "Los idiomas que se mezclan"], "REDACCION": ["¿Para qué sirve conocer los vicios de redacción?", "Para identificar errores y comunicar las ideas con más claridad", "Para escribir textos más largos", "Para usar más palabras en inglés"], "SINONIMOS": ["¿Cómo ayudan los sinónimos al redactar?", "Evitan la cacofonía y las repeticiones", "Provocan anfibología", "Corrigen la concordancia"], "PUNTUACION": ["Usar bien los signos de puntuación ayuda a evitar…", "La anfibología", "El barbarismo", "El pleonasmo"], "CONCORDANCIA": ["La falta de concordancia entre las palabras provoca…", "Solecismo", "Cacofonía", "Pleonasmo"], "PREPOSICIONES": ["Un orden incorrecto de las preposiciones puede causar…", "Anfibología", "Pleonasmo", "Barbarismo"], "RECEPTOR": ["¿Quién se confunde por los vicios de redacción?", "El receptor que lee el texto", "Quien escribe el texto", "El editor del libro"], "ERROR": ["Los vicios de redacción son…", "Errores o formas incorrectas al redactar", "Recursos para adornar un texto", "Reglas de ortografía"], "REPETICION": ["¿Qué vicio aparece cuando se repiten sonidos, sílabas o palabras muy cerca dentro de una oración?", "Cacofonía", "Solecismo", "Anfibología"], "INGLES": ["¿Cómo se corrige el barbarismo en «Muy buen show»?", "Muy buen espectáculo", "Muy buen performance", "Muy buen shou"], "FLUIDEZ": ["¿Qué vicio vuelve poco fluido un texto por repetir sonidos cercanos?", "Cacofonía", "Barbarismo", "Anfibología"]};
+  var found = {};
+  var results = {};
+  var pending = null;
+  var locked = false;
+  var ENDPOINT = "https://script.google.com/macros/s/AKfycbykIaaBlw9zUXnxh2hGJdEmZ2tXtOGS3n6dU3S-jsJafGDVfW66Z-PrSDgEYB9N2R6Zqg/exec";
+  var player = { id: "", name: "" };
+  var KEY = "sopa-registro-v1";
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify({ found: found, results: results, pending: pending, locked: locked, id: player.id, name: player.name })); } catch (err) {}
+  }
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (s && s.found) { found = s.found; results = s.results || {}; pending = s.pending || null; locked = !!s.locked; player.id = s.id || ""; player.name = s.name || ""; }
+    } catch (err) {}
+  }
+  var cells = [];
+  var start = null;
+  var current = [];
+  var revealed = false;
+
+  board.style.setProperty("--n", N);
+
+  for (var r = 0; r < N; r++) {
+    for (var c = 0; c < N; c++) {
+      var d = document.createElement("div");
+      d.className = "cell";
+      d.textContent = DATA.grid[r][c];
+      board.appendChild(d);
+      cells.push(d);
+    }
+  }
+
+  names.forEach(function (w) {
+    var li = document.createElement("li");
+    li.textContent = w;
+    li.id = "w-" + w;
+    list.appendChild(li);
+  });
+
+  function cellsOf(w) {
+    var p = DATA.words[w], out = [];
+    for (var i = 0; i < w.length; i++) out.push((p.r + p.dr * i) * N + (p.c + p.dc * i));
+    return out;
+  }
+
+  function paintFound() {
+    cells.forEach(function (el) { el.className = "cell"; });
+    var k = 0;
+    names.forEach(function (w) {
+      if (found[w]) {
+        var cls = results[w] === false ? "reveal" : "f" + ((k % 4) + 1);
+        cellsOf(w).forEach(function (i) { cells[i].classList.add(cls); });
+        k++;
+      }
+    });
+    if (revealed) {
+      names.forEach(function (w) {
+        if (!found[w]) cellsOf(w).forEach(function (i) { cells[i].classList.add("reveal"); });
+      });
+    }
+    current.forEach(function (i) { cells[i].classList.add("pick"); });
+  }
+
+  function update() {
+    var n = Object.keys(found).length;
+    var okN = names.filter(function (w) { return results[w] === true; }).length;
+    var answered = Object.keys(results).length;
+    status.textContent = locked ? "Juego terminado · " + okN + " correctas" : n + " de " + names.length + " encontradas · " + okN + " correctas";
+    names.forEach(function (w) {
+      var li = document.getElementById("w-" + w);
+      li.classList.toggle("done", !!found[w]);
+      li.classList.toggle("ok", results[w] === true);
+      li.classList.toggle("bad", results[w] === false);
+    });
+    document.getElementById("score").textContent = okN;
+    win.hidden = locked || !(answered === names.length && !pending);
+    save();
+    paintFound();
+  }
+
+  function pos(e) {
+    var b = board.getBoundingClientRect();
+    var c = Math.floor((e.clientX - b.left) / b.width * N);
+    var r = Math.floor((e.clientY - b.top) / b.height * N);
+    return { r: Math.max(0, Math.min(N - 1, r)), c: Math.max(0, Math.min(N - 1, c)) };
+  }
+
+  function line(a, b) {
+    var dx = b.c - a.c, dy = b.r - a.r;
+    if (dx === 0 && dy === 0) return [a.r * N + a.c];
+    var ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+    var sc = Math.round(Math.cos(ang)), sr = Math.round(Math.sin(ang));
+    var len = Math.max(Math.abs(dx), Math.abs(dy));
+    var out = [];
+    for (var i = 0; i <= len; i++) {
+      var rr = a.r + sr * i, cc = a.c + sc * i;
+      if (rr < 0 || rr >= N || cc < 0 || cc >= N) break;
+      out.push(rr * N + cc);
+    }
+    return out;
+  }
+
+  function word(idx) {
+    return idx.map(function (i) { return DATA.grid[Math.floor(i / N)][i % N]; }).join("");
+  }
+
+  board.addEventListener("pointerdown", function (e) {
+    e.preventDefault();
+    if (locked) return;
+    if (pending) { try { fbBox.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (err) {} return; }
+    fbBox.classList.remove("sheet");
+    try { board.setPointerCapture(e.pointerId); } catch (err) {}
+    start = pos(e);
+    current = line(start, start);
+    paintFound();
+  });
+  board.addEventListener("pointermove", function (e) {
+    if (!start) return;
+    current = line(start, pos(e));
+    paintFound();
+  });
+
+  var fbBox = document.getElementById("feedback");
+  function showFeedback(title, text, bad) {
+    fbBox.className = "feedback" + (bad ? " bad" : "");
+    fbBox.innerHTML = "";
+    var l = document.createElement("span"); l.className = "fb-label"; l.textContent = bad ? "Intenta de nuevo" : "¡Correcto! Retroalimentación";
+    fbBox.appendChild(l);
+    if (title) { var h = document.createElement("h3"); h.className = "fb-title"; h.textContent = title; fbBox.appendChild(h); }
+    var p = document.createElement("p"); p.textContent = text; fbBox.appendChild(p);
+  }
+  function showQuestion(w) {
+    var q = QS[w];
+    var opts = q.slice(1).map(function (t, i) { return { t: t, ok: i === 0 }; });
+    for (var i = opts.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1)), x = opts[i]; opts[i] = opts[j]; opts[j] = x;
+    }
+    fbBox.className = "feedback q sheet";
+    fbBox.innerHTML = "";
+    var l = document.createElement("span"); l.className = "fb-label"; l.textContent = "Pregunta · responde para seguir buscando";
+    var h = document.createElement("h3"); h.className = "fb-title"; h.textContent = w;
+    var p = document.createElement("p"); p.textContent = q[0];
+    var box = document.createElement("div"); box.className = "opts";
+    opts.forEach(function (o) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "opt"; b.textContent = o.t;
+      b.addEventListener("click", function () { answer(w, o.ok); });
+      box.appendChild(b);
+    });
+    fbBox.appendChild(l); fbBox.appendChild(h); fbBox.appendChild(p); fbBox.appendChild(box);
+    try { fbBox.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (err) {}
+  }
+  function answer(w, ok) {
+    results[w] = ok;
+    pending = null;
+    fbBox.className = "feedback sheet" + (ok ? " good" : " bad");
+    fbBox.innerHTML = "";
+    var l = document.createElement("span"); l.className = "fb-label"; l.textContent = ok ? "¡Correcto!" : "Incorrecto";
+    var h = document.createElement("h3"); h.className = "fb-title"; h.textContent = w;
+    fbBox.appendChild(l); fbBox.appendChild(h);
+    if (!ok) {
+      var c = document.createElement("p"); c.textContent = "La respuesta correcta era: " + QS[w][1]; fbBox.appendChild(c);
+    }
+    var p = document.createElement("p"); p.textContent = DATA.fb[w]; fbBox.appendChild(p);
+    var go = document.createElement("button");
+    go.type = "button"; go.className = "primary"; go.textContent = "Continuar";
+    go.addEventListener("click", function () {
+      fbBox.classList.remove("sheet");
+      if (!win.hidden) { try { win.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (err) {} }
+    });
+    fbBox.appendChild(go);
+    update();
+    report();
+  }
+
+  var sendEl = document.getElementById("sendstate");
+  function configured() { return /^https:\/\/script\.google\.com\//.test(ENDPOINT); }
+  function sendState(msg) {
+    if (!configured()) { sendEl.hidden = true; return; }
+    sendEl.hidden = false;
+    sendEl.textContent = msg;
+  }
+  function report() {
+    if (!player.name || !configured()) return;
+    var detail = {};
+    names.forEach(function (w) { if (results[w] !== undefined) detail[w] = results[w]; });
+    var answered = Object.keys(detail).length;
+    var okN = names.filter(function (w) { return results[w] === true; }).length;
+    var body = JSON.stringify({
+      id: player.id, nombre: player.name, correctas: okN, contestadas: answered,
+      total: names.length, terminado: locked || answered === names.length, detalle: detail
+    });
+    sendState("Enviando tu resultado…");
+    fetch(ENDPOINT, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: body })
+      .then(function () { sendState("Resultado enviado al registro."); if (locked || answered === names.length) setTimeout(loadTop, 1500); })
+      .catch(function () { sendState("No se pudo enviar. Revisa tu internet. Se reintentará con tu próxima respuesta."); });
+  }
+
+  var gate = document.getElementById("gate");
+  var nameInput = document.getElementById("name-input");
+  var gateErr = document.getElementById("gate-err");
+  function newId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function startGame() {
+    var n = nameInput.value.replace(/\s+/g, " ").trim();
+    if (n.length < 3) { gateErr.hidden = false; nameInput.focus(); return; }
+    player.name = n.slice(0, 60);
+    player.id = newId();
+    gateErr.hidden = true;
+    gate.hidden = true;
+    save();
+    showPlayer();
+    report();
+  }
+  document.getElementById("gate-go").addEventListener("click", startGame);
+  nameInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); startGame(); }
+  });
+  function showPlayer() {
+    var lead = document.querySelector(".lead");
+    var old = document.getElementById("player-line");
+    if (old) old.remove();
+    if (!player.name) return;
+    var p = document.createElement("p");
+    p.id = "player-line"; p.className = "player";
+    p.textContent = "Jugando como: " + player.name;
+    lead.parentNode.appendChild(p);
+  }
+
+  var admin = document.getElementById("admin");
+  var adminMsg = document.getElementById("admin-msg");
+  var adminTable = document.getElementById("admin-table");
+  var claveInput = document.getElementById("clave-input");
+  function route() {
+    var on = location.hash === "#resultados";
+    admin.hidden = !on;
+    if (on) gate.hidden = true;
+    else if (!player.name) gate.hidden = false;
+  }
+  window.addEventListener("hashchange", route);
+  document.getElementById("admin-close").addEventListener("click", function () {
+    location.hash = "";
+    route();
+  });
+  function cell(tr, text, cls) {
+    var td = document.createElement("td");
+    if (cls) td.className = cls;
+    td.textContent = text;
+    tr.appendChild(td);
+    return td;
+  }
+  var allRows = [], showAll = false;
+  var moreBtn = document.getElementById("admin-more");
+  function renderRows() {
+    var pos = 0, prev = null;
+    var ranked = allRows.map(function (r, i) {
+      var c = Number(r.correctas) || 0;
+      if (c !== prev) { pos = i + 1; prev = c; }
+      return { r: r, pos: pos };
+    });
+    var shown = showAll ? ranked : ranked.filter(function (x) { return x.pos <= 10; });
+    adminTable.innerHTML = "";
+    var tbl = document.createElement("table"); tbl.className = "res";
+    var head = document.createElement("tr");
+    ["Lugar", "Nombre", "Correctas", "Contestadas", "Estado", "Palabras falladas", "Última actualización"].forEach(function (h) {
+      var th = document.createElement("th"); th.textContent = h; head.appendChild(th);
+    });
+    var thead = document.createElement("thead"); thead.appendChild(head); tbl.appendChild(thead);
+    var tb = document.createElement("tbody");
+    var sum = 0;
+    allRows.forEach(function (r) { sum += Number(r.correctas) || 0; });
+    shown.forEach(function (x) {
+      var r = x.r, tr = document.createElement("tr");
+      if (x.pos <= 3) tr.className = "top";
+      var det = {};
+      try { det = JSON.parse(r.detalle || "{}"); } catch (err) {}
+      var fails = Object.keys(det).filter(function (k) { return det[k] === false; }).join(", ");
+      var pc = cell(tr, "", "pos");
+      var medal = document.createElement("span");
+      medal.className = "medal" + (x.pos <= 3 ? " p" + x.pos : "");
+      medal.textContent = String(x.pos);
+      pc.appendChild(medal);
+      cell(tr, String(r.nombre));
+      cell(tr, (r.correctas || 0) + " de " + (r.total || names.length), "num");
+      cell(tr, String(r.contestadas || 0), "num");
+      var st = cell(tr, "");
+      var tag = document.createElement("span");
+      var done = r.terminado === true || r.terminado === "Sí";
+      tag.className = "tag" + (done ? "" : " pend");
+      tag.textContent = done ? "Terminó" : "En curso";
+      st.appendChild(tag);
+      cell(tr, fails || "—");
+      var when = "";
+      try { when = new Date(r.actualizado).toLocaleString("es-MX"); } catch (err) {}
+      cell(tr, when === "Invalid Date" ? "" : when);
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);
+    adminTable.appendChild(tbl);
+    adminTable.hidden = false;
+    moreBtn.hidden = allRows.length === 0 || (!showAll && shown.length === ranked.length);
+    moreBtn.textContent = showAll ? "Ver solo el Top 10" : "Ver todos (" + allRows.length + ")";
+    adminMsg.className = "admin-msg";
+    adminMsg.textContent = allRows.length
+      ? (showAll ? "Todos los participantes: " : "Top 10 de ") + allRows.length + " participante(s). Promedio de aciertos: " + (sum / allRows.length).toFixed(1) + " de " + names.length + ". Si hay empate en aciertos, comparten lugar."
+      : "Todavía no hay participantes.";
+  }
+  moreBtn.addEventListener("click", function () { showAll = !showAll; renderRows(); });
+  document.getElementById("admin-load").addEventListener("click", function () {
+    adminMsg.className = "admin-msg";
+    if (!configured()) { adminMsg.className = "admin-msg err"; adminMsg.textContent = "Falta pegar la URL de Apps Script dentro del archivo (variable ENDPOINT)."; return; }
+    if (!claveInput.value) { adminMsg.className = "admin-msg err"; adminMsg.textContent = "Escribe la clave."; return; }
+    adminMsg.textContent = "Cargando…";
+    fetch(ENDPOINT + "?clave=" + encodeURIComponent(claveInput.value))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { adminMsg.className = "admin-msg err"; adminMsg.textContent = "Clave incorrecta."; adminTable.hidden = true; moreBtn.hidden = true; return; }
+        allRows = d.rows || [];
+        allRows.sort(function (a, b) {
+          var fa = (a.terminado === true || a.terminado === "Sí") ? 1 : 0;
+          var fb = (b.terminado === true || b.terminado === "Sí") ? 1 : 0;
+          return ((Number(b.correctas) || 0) - (Number(a.correctas) || 0)) || (fb - fa) || String(a.nombre).localeCompare(String(b.nombre));
+        });
+        showAll = false;
+        renderRows();
+      })
+      .catch(function () { adminMsg.className = "admin-msg err"; adminMsg.textContent = "No se pudo leer el registro. Revisa la URL y que el script esté publicado para cualquier persona."; });
+  });
+
+
+  var topBox = document.getElementById("topbox");
+  var topList = document.getElementById("toplist");
+  var topMsg = document.getElementById("top-msg");
+  function loadTop() {
+    if (!configured()) { topBox.hidden = true; return; }
+    topBox.hidden = false;
+    topMsg.textContent = "Cargando…";
+    fetch(ENDPOINT + "?top=1")
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var rows = d.top || [];
+        topList.innerHTML = "";
+        var pos = 0, prev = null;
+        rows.forEach(function (r, i) {
+          var c = Number(r.correctas) || 0;
+          if (c !== prev) { pos = i + 1; prev = c; }
+          var li = document.createElement("li");
+          var m = document.createElement("span");
+          m.className = "medal" + (pos <= 3 ? " p" + pos : "");
+          m.textContent = String(pos);
+          var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = String(r.nombre);
+          var sc = document.createElement("span"); sc.className = "sc"; sc.textContent = c + " de " + (r.total || names.length);
+          li.appendChild(m); li.appendChild(nm); li.appendChild(sc);
+          topList.appendChild(li);
+        });
+        topMsg.textContent = rows.length ? "Aparecen quienes ya terminaron la sopa." : "Todavía nadie ha terminado. Sé la primera persona en el Top.";
+      })
+      .catch(function () { topMsg.textContent = "No se pudo cargar el Top. Toca Actualizar para intentar de nuevo."; });
+  }
+  document.getElementById("top-refresh").addEventListener("click", loadTop);
+
+  function finish() {
+    if (!start) return;
+    var w = word(current), rev = w.split("").reverse().join("");
+    var hit = null, again = null;
+    names.forEach(function (n) {
+      if (n === w || n === rev) {
+        if (!found[n]) { found[n] = true; hit = n; } else { again = n; }
+      }
+    });
+    if (hit) { pending = hit; showQuestion(hit); }
+    else if (again) showFeedback(again, "Ya habías encontrado esta palabra. " + DATA.fb[again], false);
+    else if (current.length > 1) showFeedback("", "Esa selección no está en la lista. Revisa las palabras de la derecha y arrastra de la primera a la última letra.", true);
+    start = null;
+    current = [];
+    update();
+  }
+  board.addEventListener("pointerup", finish);
+  board.addEventListener("pointercancel", function () { start = null; current = []; paintFound(); });
+
+  var confirming = false, confirmTimer = null;
+  function applyLock() {
+    board.classList.toggle("locked", locked);
+    btnReveal.disabled = locked;
+    btnReveal.textContent = locked ? "Solución mostrada" : "Mostrar solución";
+    if (!locked) return;
+    var okN = names.filter(function (w) { return results[w] === true; }).length;
+    fbBox.className = "feedback bad";
+    fbBox.innerHTML = "";
+    var l = document.createElement("span"); l.className = "fb-label"; l.textContent = "Juego terminado";
+    var p = document.createElement("p");
+    p.textContent = "Mostraste la solución, así que ya no puedes seguir jugando. Puntaje final: " + okN + " de " + names.length + ".";
+    fbBox.appendChild(l); fbBox.appendChild(p);
+  }
+  function lockGame() {
+    locked = true;
+    revealed = true;
+    if (pending) { results[pending] = false; pending = null; }
+    update();
+    applyLock();
+    report();
+  }
+  btnReveal.addEventListener("click", function () {
+    if (locked) return;
+    if (!confirming) {
+      confirming = true;
+      btnReveal.textContent = "¿Seguro? El juego terminará. Toca otra vez";
+      clearTimeout(confirmTimer);
+      confirmTimer = setTimeout(function () {
+        confirming = false;
+        if (!locked) btnReveal.textContent = "Mostrar solución";
+      }, 5000);
+      return;
+    }
+    clearTimeout(confirmTimer);
+    confirming = false;
+    lockGame();
+  });
+
+  load();
+  if (locked) { revealed = true; pending = null; applyLock(); }
+  else if (pending) showQuestion(pending);
+  update();
+  showPlayer();
+  route();
+  if (player.name) report();
+  loadTop();
+})();
+</script>
+</body>
+</html>
